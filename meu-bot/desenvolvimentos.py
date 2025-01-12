@@ -1,10 +1,37 @@
 from telegram import Update
 from telegram.constants import ParseMode
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters, CallbackContext
+import requests
 
 TARGET_CHAT_ID = "473291277"
 CHAT_GROUP_ID = "-4702645624"
 TOKEN_API = "7202685559:AAHa-HO0Th7WMkh5fHYa_OcC4njq86oQid0"
+SEARCH_ENGINE_ID = "f51791f34c66f4439"
+API_KEY = "AIzaSyBrfElqIdC1N-VhawMYDfOxqfRS54HU3c8"
+
+def search_google(query):
+    url = f"https://www.googleapis.com/customsearch/v1?q={query}&key={API_KEY}&cx={SEARCH_ENGINE_ID}"
+
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        results = response.json().get('items', [])
+        return [(result['title'], result['link']) for result in results]
+    else:
+        return ["Erro na pesquisa"]
+
+async def search(update: Update, context: CallbackContext):
+    query = ' '.join(context.args)
+    if not query:
+        await update.message.reply_text("Por favor, forneça uma consulta para a pesquisa.")
+        return
+    
+    results = search_google(query)
+    if results:
+        response = "\n\n".join([f"{title}: {link}" for title, link in results[:5]])
+        await update.message.reply_text(response)
+    else:
+        await update.message.reply_text("Não encontrei resultados para a sua pesquisa.")
 
 async def get_group_members(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.message.chat.type not in ["group", "supergroup"]:
@@ -41,6 +68,7 @@ app.add_handler(CommandHandler("members", get_group_members))
 app.add_handler(CommandHandler("chatid", get_group_id))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, send_message))
 app.add_handler(CommandHandler("soma", soma))
+app.add_handler(CommandHandler("search", search))
 
 if __name__ == "__main__":
     app.run_polling()
