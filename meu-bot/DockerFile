@@ -1,8 +1,8 @@
 FROM python:3-10-slim
 
-WORKDIR /V2
+WORKDIR /app
 
-COPY . /V2
+COPY . /app
 
 RUN pip install --no-cache-dir -r requirements.txt
 
