@@ -32,10 +32,15 @@ async def send_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             parse_mode=ParseMode.MARKDOWN
         )
 
+async def soma(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text("Digite o primeiro número: ")
+    numero = update.message.text
+
 app = ApplicationBuilder().token(TOKEN_API).build()
 app.add_handler(CommandHandler("members", get_group_members))
 app.add_handler(CommandHandler("chatid", get_group_id))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, send_message))
+app.add_handler(CommandHandler("soma", soma))
 
 if __name__ == "__main__":
     app.run_polling()
