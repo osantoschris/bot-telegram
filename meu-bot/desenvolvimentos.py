@@ -1,18 +1,32 @@
 import os
+import requests
 from dotenv import load_dotenv
+import google.generativeai as genai
+from deep_translator import GoogleTranslator
 from telegram import Update
 from telegram.constants import ParseMode
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters, CallbackContext
-import requests
 
-load_dotenv()
+# load_dotenv()
 
-TARGET_CHAT_ID = os.getenv("TARGET_CHAT_ID")
-CHAT_GROUP_ID = os.getenv("CHAT_GROUP_ID")
-TOKEN_API = os.getenv("TOKEN_API")
-SEARCH_ENGINE_ID = os.getenv("SEARCH_ENGINE_ID")
-API_KEY = os.getenv("API_KEY")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+# TARGET_CHAT_ID = os.getenv("TARGET_CHAT_ID")
+# CHAT_GROUP_ID = os.getenv("CHAT_GROUP_ID")
+# TOKEN_API = os.getenv("TOKEN_API")
+# SEARCH_ENGINE_ID = os.getenv("SEARCH_ENGINE_ID")
+# API_KEY = os.getenv("API_KEY")
+# GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+TARGET_CHAT_ID="473291277"
+CHAT_GROUP_ID="-4702645624"
+TOKEN_API="7202685559:AAHa-HO0Th7WMkh5fHYa_OcC4njq86oQid0"
+SEARCH_ENGINE_ID="f51791f34c66f4439"
+API_KEY="AIzaSyBrfElqIdC1N-VhawMYDfOxqfRS54HU3c8"
+GEMINI_API_KEY="AIzaSyA4sN6DC8ssBsFgQULCxXbZjpB5AMALXMQ"
+
+genai.configure(api_key=GEMINI_API_KEY)
+model = genai.GenerativeModel("gemini-1.5-flash")
+
+translator = GoogleTranslator(source="en", target="pt")
 
 def search_google(query):
     url = f"https://www.googleapis.com/customsearch/v1?q={query}&key={API_KEY}&cx={SEARCH_ENGINE_ID}"
@@ -70,25 +84,12 @@ async def gemini_response(update: Update, context: CallbackContext) -> None:
     if not user_text:
         await update.message.reply_text("Por favor, forneça uma consulta para a pesquisa.")
         return
-    url = "https://api.openai.com/v1/chat/completions"
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {GEMINI_API_KEY}"
-    }
-    data = {
-        "model": "gemini-1.5-flash",
-        "messages": [{"role": "user", "content": user_text}]
-    }
-    response = requests.post(url, headers=headers, data=data)
 
-    print(response.json())
-    
-    if response.status_code == 200:
-        gemini_response = response.json()['choices'][0]['message']['content']
-        # print(gemini_response)
-        await update.message.reply_text(gemini_response)
-    else:
-        await update.message.reply_text("Houve um erro ao processar a sua consulta.")
+    response = model.generate_content(user_text)
+
+    text = response.text
+    translated = translator.translate(text)
+    await update.message.reply_text(translated)
 
 app = ApplicationBuilder().token(TOKEN_API).build()
 app.add_handler(CommandHandler("members", get_group_members))
