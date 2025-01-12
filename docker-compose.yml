@@ -1,0 +1,9 @@
+version: "3.10"
+
+services:
+  bot:
+    build: .
+    container_name: bot-telegram
+    restart: unless-stopped
+    volumes:
+      - .:/app
