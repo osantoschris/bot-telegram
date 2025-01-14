@@ -1,14 +1,8 @@
-import google.generativeai as genai
-from googletrans import Translator
+from pydub import AudioSegment
+import os, warnings
 
-translator = Translator()
+warnings.filterwarnings('ignore')
 
-genai.configure(api_key="AIzaSyA4sN6DC8ssBsFgQULCxXbZjpB5AMALXMQ")
-model = genai.GenerativeModel("gemini-1.5-flash")
-response = model.generate_content("Explain how AI works")
+audio_file = r"E:\11. Projetos\12 - Telegram Bot\v2\meu-bot\media\oi_rafael.mp3"
 
-text = response.text
-
-translated = translator.translate(text, src="en", dest="pt")
-
-print(translated.text)
+audio = AudioSegment.from_mp3(audio_file)

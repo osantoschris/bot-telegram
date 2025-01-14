@@ -1,6 +1,7 @@
 import os
 import requests
 from dotenv import load_dotenv
+from gtts import gTTS
 import google.generativeai as genai
 from deep_translator import GoogleTranslator
 from telegram import Update
@@ -72,11 +73,24 @@ async def get_group_id(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     await context.bot.send_message(chat_id=TARGET_CHAT_ID, text=chat_id)
 
 async def send_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if update.message.text == "Manda oi pro rafael":
+    mensagem = update.message.text.lower()
+
+    if mensagem == "manda oi pro rafael":
         await update.message.reply_text(
             f"Oi, [Rafael](tg://user?id=5704397075)! Como é que você está?",
             parse_mode=ParseMode.MARKDOWN
         )
+
+    if mensagem == "manda aquele oi pro rafael":
+        print("procurando o audio")
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        arquivo_audio = os.path.join(current_dir, "media", "oi_rafael.mp3")
+
+        if os.path.exists(arquivo_audio):
+            with open(arquivo_audio, 'rb'):
+                await update.message.reply_audio(arquivo_audio)
+        else:
+            await update.message.reply_text("Estamos enfrendando alguns problemas em nossos servidores. Logo logo essa funcionalidade retornará ao nosso BOT.")
 
 async def gemini_response(update: Update, context: CallbackContext) -> None:
     user_text = " ".join(context.args)
@@ -91,12 +105,28 @@ async def gemini_response(update: Update, context: CallbackContext) -> None:
     translated = translator.translate(text)
     await update.message.reply_text(translated)
 
+async def send_audio(update: Update, context: CallbackContext) -> None:
+    text = " ".join(context.args)
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    tts = gTTS(text, lang='pt')
+
+    audio_path = os.path.join(current_dir, "media", "audio.mp3")
+    tts.save(audio_path)
+
+    if os.path.exists(audio_path):
+        with open(audio_path, 'rb'):
+            await update.message.reply_audio(audio_path)
+    else:
+        await update.message.reply_text("Estamos enfrendando alguns problemas em nossos servidores. Logo logo essa funcionalidade retornará ao nosso BOT.")
+
+
 app = ApplicationBuilder().token(TOKEN_API).build()
 app.add_handler(CommandHandler("members", get_group_members))
 app.add_handler(CommandHandler("chatid", get_group_id))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, send_message))
 app.add_handler(CommandHandler("search", search))
 app.add_handler(CommandHandler("gemini", gemini_response))
+app.add_handler(CommandHandler("audio", send_audio))
 
 if __name__ == "__main__":
     app.run_polling()
